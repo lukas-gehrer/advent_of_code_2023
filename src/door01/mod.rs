@@ -1,11 +1,14 @@
 pub mod solution {
+    use std::env;
     use crate::read_lines::read_lines::read_lines;
 
     pub fn part_one() {
-        const FILE01: &str = "/home/lui/RUST/advent_of_code_2023/src/door01/input.txt";
+        let path = env::current_dir().unwrap();
+        let file01 = path.join("./src/door01/input.txt");
+
         let mut current_sum: i32 = 0;
 
-        if let Ok(lines) = read_lines(FILE01) {
+        if let Ok(lines) = read_lines(file01) {
             for line in lines {
                 let mut all_numbers: String = line.unwrap().chars().filter(|c| c.is_digit(10)).collect();
                 if all_numbers.len() > 1 {
@@ -25,7 +28,9 @@ pub mod solution {
     }
 
     pub fn part_two() {
-        const FILE01: &str = "/home/lui/RUST/advent_of_code_2023/src/door01/input.txt";
+        let path = env::current_dir().unwrap();
+        let file01 = path.join("./src/door01/input.txt");
+
         let string_numbers: [&str; 9] = [
             "one",
             "two",
@@ -39,9 +44,9 @@ pub mod solution {
         ];
         let mut current_sum: i32 = 0;
 
-        if let Ok(lines) = read_lines(FILE01) {
+        if let Ok(lines) = read_lines(file01) {
             for line in lines {
-                let mut line_unwrap = line.unwrap();
+                let line_unwrap = line.unwrap();
                 let mut number_array:Vec<char> = vec!['0'; line_unwrap.len()];
 
                 for (i, char) in line_unwrap.chars().enumerate() {
@@ -51,7 +56,7 @@ pub mod solution {
                 };
 
                 for (string_number_index,string_number) in string_numbers.iter().enumerate() {
-                    let mut word_positions: Vec<_> = line_unwrap.match_indices(string_number).map(|(i, _)|i).collect();
+                    let word_positions: Vec<_> = line_unwrap.match_indices(string_number).map(|(i, _)|i).collect();
                     for word_position in word_positions {
                         let value = string_number_index + 1;
                         number_array[word_position] = char::from_digit(value as u32, 10).unwrap();
@@ -68,7 +73,6 @@ pub mod solution {
                     let first_number = number_array.first().unwrap();
                     all_numbers = format!("{}{}", first_number, first_number);
                 }
-                println!("Input :{} \n Output: {}", line_unwrap, all_numbers);
                 if let Ok(value) = all_numbers.parse::<i32>() {
                     current_sum = current_sum + value;
                 }
