@@ -9,5 +9,7 @@ mod read_lines;
 
 fn main() {
     // door01::solution::part_one();
-    door01::solution::part_two();
+    // door01::solution::part_two();
+    // door02::solution::part_one();
+    door02::solution::part_two();
 }
