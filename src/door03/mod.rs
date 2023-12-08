@@ -1,6 +1,7 @@
 pub mod solution {
     use std::env;
     use std::path::PathBuf;
+    use crate::door03::is_connected_to_gear;
     use crate::read_lines::read_lines::read_lines;
 
     pub fn part_one() {
@@ -19,20 +20,14 @@ pub mod solution {
         assert_eq!(132, process_file(test_diagonal));
         assert_eq!(4361, process_file(tutorial_input));
         assert_eq!(7, process_file(other_test));
-
-        process_file(file03);
+        assert_eq!(527446, process_file(file03));
     }
 
     pub fn part_two() {
-        // let path = env::current_dir().unwrap();
-        // let file03 = path.join("./src/door03/tutorial_input.txt");
-        //
-        // let mut current_sum: i32 = 0;
-        //
-        // if let Ok(lines) = read_lines(file03) {
-        //     for line in lines {}
-        // }
-        // println!("Door 03 part two result {}", current_sum);
+        let path = env::current_dir().unwrap();
+        let file03 = path.join("./src/door03/input.txt");
+
+        process_file_part_2(file03);
     }
 
     fn process_file(file: PathBuf) -> i32 {
@@ -57,7 +52,7 @@ pub mod solution {
                     let len = number.len();
                     let mut x = start_index;
                     let y = i;
-                    // Check numbers around number
+                    // Check chars around number
                     let number_counts = check_if_number_should_count((*grid).to_owned(), x, y, len);
 
                     if number_counts {
@@ -71,6 +66,24 @@ pub mod solution {
         }
 
         println!("Door 03 part one result {}", current_sum);
+        return current_sum;
+    }
+
+    fn process_file_part_2(file: PathBuf) -> i32 {
+        let mut current_sum: i32 = 0;
+
+        let mut grid = generate_grid(file);
+
+        for (y, grid_line) in grid.iter().enumerate() {
+            for (x, grid_char) in grid_line.iter().enumerate() {
+                if grid_char == &'*' {
+                    let product_of_two_numbers = check_numbers_around_gear(&grid, x as i32, y as i32);
+                    current_sum = current_sum + product_of_two_numbers;
+                }
+            }
+        }
+
+        println!("Door 03 part two result {}", current_sum);
         return current_sum;
     }
 
@@ -151,4 +164,99 @@ pub mod solution {
         println!("NOTHING FOUND!");
         return false;
     }
+
+    pub fn check_numbers_around_gear(grid: &Vec<Vec<char>>, x_input: i32, y_input: i32) -> i32 {
+        // println!("Check x {} y {}", x_input, y_input);
+        let start_x = x_input - 3;
+        let end_x = x_input + 4;
+        let start_y = y_input - 1;
+        let end_y = y_input + 2;
+
+        let mut number_one = String::new();
+        let mut number_two = String::new();
+
+        let mut number_one_finished = false;
+        let mut number_two_finished = false;
+        let mut number_one_connected_to_gear = false;
+        let mut number_two_connected_to_gear = false;
+
+        for y in start_y..end_y {
+            if y > grid.len() as i32 - 1 || y < 0 {
+                continue;
+            }
+            let mut x_counter = 0;
+            for x in start_x..end_x {
+                if x < 0 {
+                    continue;
+                }
+                // line is finished so handle number_one and number_two
+                if x > grid[usize::try_from(y).unwrap()].len() as i32 - 1 {
+                    if !number_one.is_empty() && !number_one_finished {
+                        if number_one_connected_to_gear {
+                            number_one_finished = true;
+                        }
+                    } else if !number_two.is_empty() && !number_two_finished {
+                        if number_two_connected_to_gear {
+                            number_two_finished = true;
+                        }
+                    }
+                    continue;
+                }
+
+
+                let grid_char = grid[usize::try_from(y).unwrap()][usize::try_from(x).unwrap()];
+
+                if grid_char.is_digit(10) {
+                    if number_one_finished && number_two_finished { // more than one number around gear is invalid
+                        return number_one.parse::<i32>().unwrap() * number_two.parse::<i32>().unwrap();
+                    }
+                    if !number_one_finished {
+                        number_one.push(grid_char);
+                        if !number_one_connected_to_gear {
+                            number_one_connected_to_gear = is_connected_to_gear(x_input, y_input, x, y);
+                        }
+                        if x_counter > 5 {
+                            number_one_finished = true;
+                        }
+                    } else {
+                        number_two.push(grid_char);
+                        if !number_two_connected_to_gear {
+                            number_two_connected_to_gear = is_connected_to_gear(x_input, y_input, x, y);
+                        }
+                        if x_counter > 5 {
+                            number_two_finished = true;
+                        }
+                    }
+                } else { // any other character
+                    if !number_one.is_empty() && !number_one_finished {
+                        if number_one_connected_to_gear {
+                            number_one_finished = true;
+                        } else { // reset
+                            number_one = String::new();
+                        }
+                    } else if !number_two.is_empty() && !number_two_finished {
+                        if number_two_connected_to_gear {
+                            number_two_finished = true;
+                        } else { // reset
+                            number_two = String::new();
+                        }
+                    }
+                    if x_counter > 3 { // there is no number anymore
+                        break;
+                    }
+                }
+                x_counter = x_counter + 1;
+            }
+        }
+
+        if !number_one.is_empty() && !number_two.is_empty() {
+            println!("Found numbers {} and {}", number_one, number_two);
+            return number_one.parse::<i32>().unwrap() * number_two.parse::<i32>().unwrap();
+        }
+        return 0;
+    }
+}
+
+pub fn is_connected_to_gear(gear_x: i32, gear_y: i32, x: i32, y: i32) -> bool {
+    return !(gear_x.abs_diff(x) > 1) && !(gear_y.abs_diff(y) > 1);
 }
